@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Bot Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .status-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-online { background: #25D366; }
+        .status-offline { background: #ccc; }
+        .status-connecting { background: #ffa500; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .card h3 {
+            color: #128C7E;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #25D366;
+            padding-bottom: 5px;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #25D366;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .btn {
+            background: #25D366;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            background: #128C7E;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .trigger-item {
+            background: #f8f9fa;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #25D366;
+        }
+
+        .trigger-keyword {
+            font-weight: bold;
+            color: #128C7E;
+        }
+
+        .trigger-response {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .message-item {
+            background: #f8f9fa;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+
+        .message-sender {
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .message-content {
+            margin-top: 5px;
+            word-wrap: break-word;
+        }
+
+        .message-time {
+            color: #666;
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: #f8f9fa;
+            border: none;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            background: white;
+            border-bottom: 2px solid #25D366;
+            color: #128C7E;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .alert {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 WhatsApp Bot Dashboard</h1>
+            <p>Monitor and manage your WhatsApp automation bot</p>
+        </div>
+
+        <div class="status-card">
+            <h3>Bot Status</h3>
+            <div id="status-content">
+                <div class="loading">Loading status...</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('stats')">Statistics</button>
+            <button class="tab" onclick="showTab('triggers')">Triggers</button>
+            <button class="tab" onclick="showTab('messages')">Messages</button>
+            <button class="tab" onclick="showTab('users')">Users</button>
+            <button class="tab" onclick="showTab('send')">Send Message</button>
+        </div>
+
+        <div id="stats" class="tab-content active">
+            <div class="grid">
+                <div class="card">
+                    <h3>📊 Total Messages</h3>
+                    <div class="stat-number" id="total-messages">-</div>
+                    <div class="stat-label">All time</div>
+                </div>
+                <div class="card">
+                    <h3>👥 Total Users</h3>
+                    <div class="stat-number" id="total-users">-</div>
+                    <div class="stat-label">Registered users</div>
+                </div>
+                <div class="card">
+                    <h3>👥 Active Groups</h3>
+                    <div class="stat-number" id="active-groups">-</div>
+                    <div class="stat-label">Current groups</div>
+                </div>
+                <div class="card">
+                    <h3>🚨 Spam Detected</h3>
+                    <div class="stat-number" id="spam-detected">-</div>
+                    <div class="stat-label">Today</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="triggers" class="tab-content">
+            <div class="card">
+                <h3>Add New Trigger</h3>
+                <form id="trigger-form">
+                    <div class="form-group">
+                        <label for="keyword">Keyword/Trigger:</label>
+                        <input type="text" id="keyword" required placeholder="e.g., help, support">
+                    </div>
+                    <div class="form-group">
+                        <label for="response">Response:</label>
+                        <textarea id="response" required placeholder="Bot response message"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="match-type">Match Type:</label>
+                        <select id="match-type">
+                            <option value="exact">Exact Match</option>
+                            <option value="contains">Contains</option>
+                            <option value="regex">Regex</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="case-sensitive"> Case Sensitive
+                        </label>
+                    </div>
+                    <button type="submit" class="btn">Add Trigger</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>Active Triggers</h3>
+                <div id="triggers-list">
+                    <div class="loading">Loading triggers...</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="messages" class="tab-content">
+            <div class="card">
+                <h3>Recent Messages</h3>
+                <div id="messages-list">
+                    <div class="loading">Loading messages...</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="users" class="tab-content">
+            <div class="card">
+                <h3>Recent Users</h3>
+                <div id="users-list">
+                    <div class="loading">Loading users...</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="send" class="tab-content">
+            <div class="card">
+                <h3>Send Message</h3>
+                <form id="send-form">
+                    <div class="form-group">
+                        <label for="jid">Recipient JID:</label>
+                        <input type="text" id="jid" required placeholder="1234567890@s.whatsapp.net or group@g.us">
+                    </div>
+                    <div class="form-group">
+                        <label for="send-message">Message:</label>
+                        <textarea id="send-message" required placeholder="Your message here"></textarea>
+                    </div>
+                    <button type="submit" class="btn">Send Message</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let currentTab = 'stats';
+
+        // Tab switching
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            document.querySelector(`button[onclick="showTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            currentTab = tabName;
+        }
+
+        // Status updates
+        socket.on('status', (status) => {
+            updateStatus(status);
+        });
+
+        socket.on('stats', (stats) => {
+            updateStats(stats);
+        });
+
+        socket.on('error', (error) => {
+            showAlert('Error: ' + error.message, 'error');
+        });
+
+        function updateStatus(status) {
+            const statusContent = document.getElementById('status-content');
+            const indicatorClass = status.whatsapp.isConnected ? 'status-online' : 'status-offline';
+
+            statusContent.innerHTML = `
+                <p><span class="status-indicator ${indicatorClass}"></span>
+                WhatsApp: ${status.whatsapp.isConnected ? 'Connected' : 'Disconnected'}</p>
+                <p>🤖 Bot: ${status.isRunning ? 'Running' : 'Stopped'}</p>
+                ${status.whatsapp.user ? `<p>👤 User: ${status.whatsapp.user.name} (${status.whatsapp.user.phone})</p>` : ''}
+                <p>🌐 Server: ${status.config.server}</p>
+            `;
+        }
+
+        function updateStats(stats) {
+            document.getElementById('total-messages').textContent = stats.total.messages;
+            document.getElementById('total-users').textContent = stats.total.users;
+            document.getElementById('active-groups').textContent = stats.total.groups;
+            document.getElementById('spam-detected').textContent = stats.today.spam_detected;
+        }
+
+        // Load initial data
+        async function loadTriggers() {
+            try {
+                const response = await fetch('/api/triggers');
+                const triggers = await response.json();
+                displayTriggers(triggers);
+            } catch (error) {
+                console.error('Error loading triggers:', error);
+            }
+        }
+
+        async function loadMessages() {
+            try {
+                const response = await fetch('/api/messages?limit=20');
+                const messages = await response.json();
+                displayMessages(messages);
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/users');
+                const users = await response.json();
+                displayUsers(users);
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+
+        function displayTriggers(triggers) {
+            const container = document.getElementById('triggers-list');
+            if (triggers.length === 0) {
+                container.innerHTML = '<p>No triggers configured.</p>';
+                return;
+            }
+
+            container.innerHTML = triggers.map(trigger => `
+                <div class="trigger-item">
+                    <div class="trigger-keyword">${trigger.keyword}</div>
+                    <div class="trigger-response">${trigger.response}</div>
+                    <small>Type: ${trigger.match_type} | Case: ${trigger.case_sensitive ? 'Sensitive' : 'Insensitive'}</small>
+                    <button class="btn btn-danger" onclick="removeTrigger('${trigger.keyword}')">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function displayMessages(messages) {
+            const container = document.getElementById('messages-list');
+            if (messages.length === 0) {
+                container.innerHTML = '<p>No messages found.</p>';
+                return;
+            }
+
+            container.innerHTML = messages.map(msg => `
+                <div class="message-item">
+                    <div class="message-sender">${msg.sender_jid.split('@')[0]}</div>
+                    <div class="message-content">${msg.content || '[Media message]'}</div>
+                    <div class="message-time">${new Date(msg.timestamp).toLocaleString()}</div>
+                </div>
+            `).join('');
+        }
+
+        function displayUsers(users) {
+            const container = document.getElementById('users-list');
+            if (users.length === 0) {
+                container.innerHTML = '<p>No users found.</p>';
+                return;
+            }
+
+            container.innerHTML = users.map(user => `
+                <div class="trigger-item">
+                    <div class="trigger-keyword">${user.name || 'Unknown'} (${user.phone})</div>
+                    <div class="trigger-response">Messages: ${user.message_count} | Last seen: ${user.last_seen ? new Date(user.last_seen).toLocaleString() : 'Never'}</div>
+                </div>
+            `).join('');
+        }
+
+        // Form handlers
+        document.getElementById('trigger-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const keyword = document.getElementById('keyword').value;
+            const response = document.getElementById('response').value;
+            const matchType = document.getElementById('match-type').value;
+            const caseSensitive = document.getElementById('case-sensitive').checked;
+
+            try {
+                const result = await fetch('/api/triggers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keyword, response, matchType, caseSensitive })
+                });
+
+                if (result.ok) {
+                    showAlert('Trigger added successfully!', 'success');
+                    document.getElementById('trigger-form').reset();
+                    loadTriggers();
+                } else {
+                    const error = await result.json();
+                    showAlert('Error: ' + error.error, 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
+        });
+
+        document.getElementById('send-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const jid = document.getElementById('jid').value;
+            const message = document.getElementById('send-message').value;
+
+            try {
+                const result = await fetch('/api/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ jid, message })
+                });
+
+                if (result.ok) {
+                    showAlert('Message sent successfully!', 'success');
+                    document.getElementById('send-form').reset();
+                } else {
+                    const error = await result.json();
+                    showAlert('Error: ' + error.error, 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
+        });
+
+        async function removeTrigger(keyword) {
+            if (!confirm(`Remove trigger "${keyword}"?`)) return;
+
+            try {
+                const result = await fetch(`/api/triggers/${encodeURIComponent(keyword)}`, {
+                    method: 'DELETE'
+                });
+
+                if (result.ok) {
+                    showAlert('Trigger removed successfully!', 'success');
+                    loadTriggers();
+                } else {
+                    const error = await result.json();
+                    showAlert('Error: ' + error.error, 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+
+            document.querySelector('.container').insertBefore(alert, document.querySelector('.header').nextSibling);
+
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        // Load data when tabs are clicked
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.getAttribute('onclick').match(/'([^']+)'/)[1];
+                if (tabName === 'triggers') loadTriggers();
+                if (tabName === 'messages') loadMessages();
+                if (tabName === 'users') loadUsers();
+            });
+        });
+
+        // Initial load
+        loadTriggers();
+        socket.emit('get-stats');
+    </script>
+</body>
+</html>
