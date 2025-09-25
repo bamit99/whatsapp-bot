@@ -15,7 +15,7 @@ const config = {
   // Server Configuration
   server: {
     port: parseInt(process.env.PORT) || 3000,
-    host: process.env.HOST || 'localhost'
+    host: process.env.HOST || '0.0.0.0'
   },
 
   // WhatsApp Configuration
@@ -25,7 +25,7 @@ const config = {
 
   // Logging Configuration
   logging: {
-    level: process.env.LOG_LEVEL || 'info',
+    level: process.argv.includes('--trace') ? 'trace' : (process.env.LOG_LEVEL || 'info'),
     file: process.env.LOG_FILE || './logs/bot.log'
   },
 

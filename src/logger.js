@@ -29,12 +29,37 @@ const logger = winston.createLogger({
     winston.format.json()
   ),
   transports: [
-    new winston.transports.File({ filename: 'debug.log', level: 'trace' }),
+    new winston.transports.File({ filename: 'debug.log' }),
     new winston.transports.Console({
-      level: 'trace',
       format: winston.format.combine(
         winston.format.colorize(),
-        winston.format.simple()
+        winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+        winston.format.splat(),
+        winston.format.printf(({ timestamp, level, message, ...meta }) => {
+          const processMessage = (m) => {
+            if (typeof m === 'object' && m !== null) {
+              const keys = Object.keys(m);
+              if (keys.length > 0 && keys.every((k, i) => String(i) === k)) {
+                return Object.values(m).join('');
+              }
+              return JSON.stringify(m);
+            }
+            return m;
+          };
+
+          const msg = processMessage(message);
+          const metaMsg = processMessage(meta);
+
+          if (msg === '{}' || msg === '""') {
+            return `${timestamp} ${level}: ${metaMsg}`;
+          }
+          
+          if (Object.keys(meta).length === 0) {
+            return `${timestamp} ${level}: ${msg}`;
+          }
+
+          return `${timestamp} ${level}: ${msg} ${metaMsg}`;
+        })
       )
     })
   ]
