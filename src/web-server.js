@@ -25,6 +25,11 @@ class WebServer {
   }
 
   setupMiddleware() {
+    this.app.use((req, res, next) => {
+      res.setHeader('Origin-Agent-Cluster', '?1');
+      next();
+    });
+
     // Security middleware
     this.app.use(helmet({
       contentSecurityPolicy: {

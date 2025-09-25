@@ -3,12 +3,14 @@
 const logger = require('./logger');
 const WhatsAppHandler = require('./whatsapp-handler');
 const MessageHandler = require('./message-handler');
+const WebServer = require('./web-server');
 const config = require('../config/config');
 
 class WhatsAppBot {
   constructor() {
     this.whatsapp = null;
     this.messageHandler = null;
+    this.webServer = null;
     this.isRunning = false;
   }
 
@@ -31,6 +33,10 @@ class WhatsAppBot {
       // Initialize WhatsApp connection
       await this.whatsapp.initialize();
 
+      // Initialize and start web server
+      this.webServer = new WebServer(this);
+      await this.webServer.start();
+
       this.isRunning = true;
       logger.info('✅ WhatsApp Bot started successfully!');
       logger.info('📱 Scan the QR code above to authenticate your WhatsApp account.');
@@ -51,6 +57,10 @@ class WhatsAppBot {
 
       if (this.whatsapp) {
         await this.whatsapp.logout();
+      }
+
+      if (this.webServer) {
+        await this.webServer.stop();
       }
 
       if (this.messageHandler) {
